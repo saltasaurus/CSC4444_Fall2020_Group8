@@ -22,8 +22,8 @@ WHITE = (255, 255, 255)
 RED   = (255,   0,   0)
 
 red_player = pygame.image.load("red_player.png")
-coin_img = pygame.image.load("img/coin.png")
-blue_player=pygame.image.load("img/blue_player.png")
+coin_img = pygame.image.load("coin.png")
+blue_player=pygame.image.load("blue_player.png")
 
 
 # In[5]:
@@ -46,12 +46,11 @@ class Apple():
 
 class Coin(pygame.sprite.Sprite):
     score=0
-    def __init__(self, image):
+    def __init__(self):
  
         # Call the parent class (Sprite) constructor
         super().__init__()
- 
-        self.image = image
+        self.image = coin_img
         self.value= randint(1,9)
         
         #Fetch the dimensions of the coin image.
@@ -60,87 +59,40 @@ class Coin(pygame.sprite.Sprite):
         return (self.rect.x)
     def y(self):
         return (self.rect.y)
+    def draw(self, surface):
+        surface.blit(self.image,(self.rect.x,self.rect.y))
+    
 
 
 # In[7]:
 
-
-coin_list = pygame.sprite.Group()
+coins = []
  
 # This is a list of every sprite. 
 # All coins and the players as well.
-all_sprites_list = pygame.sprite.Group()
-coin_values=[]
 for i in range(50):
     # This represents a coin
-    coin = Coin(coin_img)
+    coin = Coin()
  
     # Set a random location for the coin
-    coin.rect.x = randrange(800)
-    coin.rect.y = randrange(600)
+    coin.rect.x = randrange(0,800,44)
+    coin.rect.y = randrange(0,600,44)
     
     #Set a random value for the coin
     coin.value= randint(1,10)
     
     # Add the coin to the list of objects
-    coin_list.add(coin)
-    all_sprites_list.add(coin)
-    coin_values.append(coin.value)
+    coins.append(coin)
 
-
-# In[8]:
-
-
-class my_dictionary(dict):  
-  
-    # __init__ function  
-    def __init__(self):  
-        self = dict()  
-          
-    # Function to add key:value  
-    def add(self, key, value):  
-        self[key] = value  
-
-
-# In[9]:
-
-
-value_coordinates = my_dictionary() 
-value_max=10
-
-coin_list_2 = coin_list
-
-#Loop through all the coins. Find coins of highest value and add to dictionary value_coordinates in order of value. 
-#Remove from coin_values.
-while value_max >0:
-    for coin in coin_list_2:
-        #print(coin.value, coin.rect.x, coin.rect.y)
-        if (coin.value==value_max):
-            index = coin_values.index(coin.value)
-            coin_values.pop(index)
-            #print(coin_values)
-            #coin_list_2.pop(coin)
-            value_coordinates.add(coin.rect.x,coin.rect.y)
-    
-    value_max = value_max-1
-      
-#Create a list of tuples for each dictionary item
-red_target_list = [(k, v) for k, v in value_coordinates.items()] 
-index=0
-list = red_target_list[index]
-print(red_target_list)
-x=0
-y=1
-print(list[x])
-print(list[y])
-
-index+=1
-list = red_target_list[index]
-
-
-print(list[x])
-print(list[y])
-
+def getMostValuableCoin():
+    mvc = coins[0]
+    for coin in coins:
+        if coin.value > mvc.value:
+            mvc = coin
+            if mvc.value == 10:
+                return mvc
+    print(mvc.value)
+    return mvc
 
 # In[10]:
 
@@ -158,14 +110,15 @@ class Player:
     updateCount = 0
     
     def __init__(self, length):
-       self.length = length
-       for i in range(0,2000):
+        self.length = length
+        for i in range(0,2000):
            self.x.append(-100)
            self.y.append(-100)
+        self.targetCoin = getMostValuableCoin()
 
        # initial positions, no collision.
-       self.x[0] = 2*44
-       self.y[0] = 2*44
+        self.x[0] = 2*44
+        self.y[0] = 2*44
 
     def update(self):
 
@@ -214,7 +167,9 @@ class Player:
         self.direction = 3 
 
     #coin dx and dy
-    def target(self,dx,dy):
+    def target(self):
+        dx = self.targetCoin.x()
+        dy = self.targetCoin.y()
         if self.x[0]> dx:
             self.moveLeft()
 
@@ -227,6 +182,9 @@ class Player:
 
             if self.y[0] > dy:
                 self.moveUp()
+
+    def setTarget(self,target):
+        self.targetCoin = target
 
     def draw(self, surface, image):
         for i in range(0,self.length):
@@ -259,7 +217,6 @@ class Computer:
        self.y[0] = 4*44
 
     def update(self):
-
         self.updateCount = self.updateCount + 1
         if self.updateCount > self.updateCountMax:
 
@@ -371,44 +328,28 @@ class App:
         self._display_surf = pygame.display.set_mode((self.windowWidth,self.windowHeight), pygame.HWSURFACE)
         pygame.display.set_caption('Pygame pythonspot.com example')
         self._running = True
-        self._blue_surf = pygame.image.load("img/blue_player.png").convert()
+        self._blue_surf = pygame.image.load("blue_player.png").convert()
         self._red_surf = pygame.image.load("red_player.png").convert()
-        self._apple_surf = pygame.image.load("img/coin.png").convert()
+        self._apple_surf = pygame.image.load("coin.png").convert()
 
     def on_event(self, event):
         if event.type == QUIT:
             self._running = False
             
     def on_loop(self):
-        index=0
-        list = red_target_list[index]
-        #print(red_target_list)
-        x1=0
-        y1=1
-        first=list[x1]
-        second=list[y1]
-        #list = red_target_list[index]
-        #Here we set the target value for the player and computer
-        #list = red_target_list[index]
+
         self.computer.target(self.apple.x, self.apple.y)
-        self.player.target(first, second)
+        self.player.target()
         self.player.update()
         self.computer.update()
             
         # does blue eat apple?
         for i in range(0,1):#self.player.length):
-            if self.game.isCollision(first,second,self.player.x[i], self.player.y[i],44):
-                index +=1
-                list = red_target_list[index]
-                print(index)
-                print(first)
-                print(second)
-                #self.apple.x = randint(2,9) * 44
-                #self.apple.y = randint(2,9) * 44
-                #self.apple.value=randint(1,9)
-                #player_score+=1
-                #self.player.length = self.player.length + 1
-                self.player.score = self.player.score + randint(0,5)
+            if self.game.isCollision(self.player.targetCoin.x(),self.player.targetCoin.y(),self.player.x[i], self.player.y[i],44):
+                print("Coin collected!")
+                coins.remove(self.player.targetCoin)
+                self.player.setTarget(getMostValuableCoin())
+                self.player.score = self.player.score + self.player.targetCoin.value
 
         # does red eat apple?
         for i in range(0,1):#self.player.length):
@@ -416,24 +357,7 @@ class App:
                 self.apple.x = randint(2,9) * 44
                 self.apple.y = randint(2,9) * 44
                 self.apple.value= randint(4,9)
-                #print(index)
-                #print(list[0])
-                #print(list[1])
-                
                 self.computer.score=self.computer.score + self.apple.value
-                
-            #print(list[0])
-            #print(list[1])
-                #computer_score+=1
-                #self.computer.length = self.computer.length + 1
-                
-                
-        #for i in range(2,self.player.length):
-            #if self.game.isCollision(self.player.x[0],self.player.y[0],self.player.x[i], self.player.y[i],40):
-                #print("You lose! Collision: ")
-               # print("x[0] (" + str(self.player.x[0]) + "," + str(self.player.y[0]) + ")" ) 
-                #print("x[" + str(i) + "] (" + str(self.player.x[i]) + "," + str(self.player.y[i]) + ")" ) 
-               # exit(0)
        
         pass  
     
@@ -444,7 +368,9 @@ class App:
         self.computer.draw(self._display_surf, self._red_surf)
         self.computer.show_score(self._display_surf,1, self.windowWidth, self.windowHeight)
         self.player.show_score(self._display_surf,2, self.windowWidth, self.windowHeight)
-        all_sprites_list.draw(self._display_surf)
+        for coin in coins:
+            coin.draw(self._display_surf)
+        #all_sprites_list.draw(self._display_surf)
         pygame.display.flip()
    
     def on_cleanup(self):
@@ -454,17 +380,20 @@ class App:
         if self.on_init() == False:
             self._running = False
  
-        while( self._running ):
-                while (self.computer.score < 100 and self.player.score <100):
-                    pygame.event.pump()
-                    self.on_loop()
-                    self.on_render()
-                    time.sleep (50.0 / 1000.0);
-                else:
-                    print("You lose! Collision: ")
-                    print("x[0] (" + str(self.player.x[0]) + "," + str(self.player.y[0]) + ")" ) 
-                    exit(0)
-                self.on_cleanup()
+        while self._running and self.computer.score < 100 and self.player.score <100:
+            # ends loop if user quits
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    self._running = False
+            pygame.event.pump()
+            self.on_loop()
+            self.on_render()
+            time.sleep (50.0 / 1000.0)
+                #else:
+        print("You lose! Collision: ")
+        print("x[0] (" + str(self.player.x[0]) + "," + str(self.player.y[0]) + ")" ) 
+        exit(0)
+        self.on_cleanup()
 
 
 # In[ ]:
