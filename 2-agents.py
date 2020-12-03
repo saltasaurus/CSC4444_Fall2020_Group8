@@ -46,21 +46,17 @@ class Apple():
 
 class Coin(pygame.sprite.Sprite):
     score=0
-    def __init__(self):
+    def __init__(self,x,y,val):
  
         # Call the parent class (Sprite) constructor
         super().__init__()
         self.image = coin_img
-        self.value= randint(1,9)
-        
-        #Fetch the dimensions of the coin image.
-        self.rect = self.image.get_rect()
-    def x(self):
-        return (self.rect.x)
-    def y(self):
-        return (self.rect.y)
+        self.value= val
+        self.x = x
+        self.y = y
+
     def draw(self, surface):
-        surface.blit(self.image,(self.rect.x,self.rect.y))
+        surface.blit(self.image,(self.x,self.y))
     
 
 
@@ -72,14 +68,7 @@ coins = []
 # All coins and the players as well.
 for i in range(50):
     # This represents a coin
-    coin = Coin()
- 
-    # Set a random location for the coin
-    coin.rect.x = randrange(0,800,44)
-    coin.rect.y = randrange(0,600,44)
-    
-    #Set a random value for the coin
-    coin.value= randint(1,10)
+    coin = Coin(randrange(0,800,44),randrange(0,600,44),randint(1,10))    
     
     # Add the coin to the list of objects
     coins.append(coin)
@@ -94,53 +83,44 @@ def getMostValuableCoin():
     print(mvc.value)
     return mvc
 
+def getClosestCoin(player):
+    closestCoin = coins[0]
+    smallestDistance = getDistanceBetween(player, closestCoin)
+    for coin in coins:
+        currentDistance = getDistanceBetween(player, coin)
+        if(currentDistance < smallestDistance):
+            smallestDistance = currentDistance
+            closestCoin = coin
+    return closestCoin
+
+def getDistanceBetween(player, coin):
+    return (abs(player.x - coin.x) ** 2 + abs(player.y - coin.y) ** 2) ** .5
+
 # In[10]:
 
 
 #Blue Player
 class Player:
-    x = [0]
-    y = [0]
-    step = 44
+    step = 11
     direction = 0
-    length = 0
     score=0
- 
-    updateCountMax = 2
-    updateCount = 0
     
-    def __init__(self, length):
-        self.length = length
-        for i in range(0,2000):
-           self.x.append(-100)
-           self.y.append(-100)
-        self.targetCoin = getMostValuableCoin()
-
+    def __init__(self):
        # initial positions, no collision.
-        self.x[0] = 2*44
-        self.y[0] = 2*44
+        self.x = 2*44
+        self.y = 2*44
+        self.targetCoin = getClosestCoin(self)
 
     def update(self):
-
-        self.updateCount = self.updateCount + 1
-        if self.updateCount > self.updateCountMax:
-
-            # update previous positions
-            for i in range(self.length-1,0,-1):
-                self.x[i] = self.x[i-1]
-                self.y[i] = self.y[i-1]
-
-            # update position of head of snake
-            if self.direction == 0:
-                self.x[0] = self.x[0] + self.step
-            if self.direction == 1:
-                self.x[0] = self.x[0] - self.step
-            if self.direction == 2:
-                self.y[0] = self.y[0] - self.step
-            if self.direction == 3:
-                self.y[0] = self.y[0] + self.step
-
-            self.updateCount = 0
+        # update position of head of snake
+        if self.direction == 0:
+            self.x = self.x + self.step
+        elif self.direction == 1:
+            self.x = self.x - self.step
+        elif self.direction == 2:
+            self.y = self.y - self.step
+        elif self.direction == 3:
+            self.y = self.y + self.step
     
     def show_score(self, surface,choice, width, height):
         score=self.score
@@ -152,7 +132,6 @@ class Player:
         else:
             score_rect.midtop = (width/2, height/1.25)
         surface.blit(score_surface, score_rect)
-    # pygame.display.flip(
 
     def moveRight(self):
         self.direction = 0
@@ -168,27 +147,26 @@ class Player:
 
     #coin dx and dy
     def target(self):
-        dx = self.targetCoin.x()
-        dy = self.targetCoin.y()
-        if self.x[0]> dx:
+        dx = self.targetCoin.x
+        dy = self.targetCoin.y
+        if self.x > dx:
             self.moveLeft()
 
-        if self.x[0]< dx:
+        if self.x < dx:
             self.moveRight()
 
-        if self.x[0] == dx:
-            if self.y[0] < dy:
+        if self.x == dx:
+            if self.y < dy:
                 self.moveDown()
 
-            if self.y[0] > dy:
+            if self.y > dy:
                 self.moveUp()
 
     def setTarget(self,target):
         self.targetCoin = target
 
     def draw(self, surface, image):
-        for i in range(0,self.length):
-            surface.blit(image,(self.x[i],self.y[i]))
+        surface.blit(image,(self.x,self.y))
 
 
 # In[11]:
@@ -317,7 +295,7 @@ class App:
         self._red_surf = None
         self._apple_surf = None
         self.game = Game()
-        self.player = Player(1)
+        self.player = Player()
         #for i in range 10:
         self.apple = Apple(8,5)
         self.computer = Computer(1)
@@ -344,12 +322,11 @@ class App:
         self.computer.update()
             
         # does blue eat apple?
-        for i in range(0,1):#self.player.length):
-            if self.game.isCollision(self.player.targetCoin.x(),self.player.targetCoin.y(),self.player.x[i], self.player.y[i],44):
-                print("Coin collected!")
-                coins.remove(self.player.targetCoin)
-                self.player.setTarget(getMostValuableCoin())
-                self.player.score = self.player.score + self.player.targetCoin.value
+        if self.player.x == self.player.targetCoin.x and self.player.y == self.player.targetCoin.y:
+            print("Coin collected!")
+            coins.remove(self.player.targetCoin)
+            self.player.setTarget(getClosestCoin(self.player))
+            self.player.score = self.player.score + self.player.targetCoin.value
 
         # does red eat apple?
         for i in range(0,1):#self.player.length):
