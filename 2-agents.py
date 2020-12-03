@@ -21,9 +21,9 @@ BLACK = (  0,   0,   0)
 WHITE = (255, 255, 255)
 RED   = (255,   0,   0)
 
-red_player = pygame.image.load("red_player.png")
-coin_img = pygame.image.load("coin.png")
-blue_player=pygame.image.load("blue_player.png")
+red_player = pygame.image.load("images/red_player.png")
+coin_img = pygame.image.load("images/coin.png")
+blue_player=pygame.image.load("images/blue_player.png")
 
 
 # In[5]:
@@ -328,9 +328,9 @@ class App:
         self._display_surf = pygame.display.set_mode((self.windowWidth,self.windowHeight), pygame.HWSURFACE)
         pygame.display.set_caption('Pygame pythonspot.com example')
         self._running = True
-        self._blue_surf = pygame.image.load("blue_player.png").convert()
-        self._red_surf = pygame.image.load("red_player.png").convert()
-        self._apple_surf = pygame.image.load("coin.png").convert()
+        self._blue_surf = pygame.image.load("images/blue_player.png").convert()
+        self._red_surf = pygame.image.load("images/red_player.png").convert()
+        self._apple_surf = pygame.image.load("images/coin.png").convert()
 
     def on_event(self, event):
         if event.type == QUIT:
