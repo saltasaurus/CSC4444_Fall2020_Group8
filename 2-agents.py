@@ -309,11 +309,11 @@ class App:
             time.sleep (50.0 / 1000.0)
                 #else:
         if self.player.score > self.computer.score and self.player.score > self.green.score:
-            print("Blue player wins! " + str(self.player.score) + " : " + str(self.computer.score) + str(self.green.score))
+            print("Blue player wins! " + str(self.player.score) + " : " + str(self.computer.score) + " :" + str(self.green.score))
         elif self.computer.score > self.player.score and self.computer.score > self.green.score:
-            print("Red player wins! " + str(self.computer.score) + " : " + str(self.player.score) + str(self.green.score))
+            print("Red player wins! " + str(self.computer.score) + " : " + str(self.player.score) + " :" + str(self.green.score))
         else:
-            print("Green! " + str(self.player.score) + " : " + str(self.computer.score) + str(self.green.score))
+            print("Green! " + str(self.player.score) + " : " + str(self.computer.score) + " :" + str(self.green.score))
         exit(0)
         self.on_cleanup()
 
