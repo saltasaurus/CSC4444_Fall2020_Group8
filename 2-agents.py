@@ -26,29 +26,11 @@ coin_img = pygame.image.load("images/coin.png")
 blue_player=pygame.image.load("images/blue_player.png")
 
 
-# In[5]:
-
-
-#Coins
-class Apple():
-    x = 0
-    y = 0
-    step = 44
-    def __init__(self,x,y):
-        self.x = x * self.step
-        self.y = y * self.step
-    def draw(self, surface, image):
-        surface.blit(image,(self.x, self.y))
-
-
-# In[6]:
-
-
 class Coin():
     score=0
-    def __init__(self,x,y,val):
+    def __init__(self,x,y):
         self.image = coin_img
-        self.value= val
+        self.value= 1
         self.x = x
         self.y = y
 
@@ -60,12 +42,14 @@ class Coin():
 # In[7]:
 
 coins = []
+windowWidth = 1200
+windowHeight = 800
  
 # This is a list of every sprite. 
 # All coins and the players as well.
 for i in range(50):
     # This represents a coin
-    coin = Coin(randrange(0,800,44),randrange(0,600,44),randint(1,10))    
+    coin = Coin(randrange(0,windowWidth,40),randrange(0,windowHeight,40))    
     
     # Add the coin to the list of objects
     coins.append(coin)
@@ -90,22 +74,45 @@ def getClosestCoin(player):
             closestCoin = coin
     return closestCoin
 
+def getBestCoin(player):
+    bestCoin = coins[0]
+    smallestCost = getDistanceBetween(player, bestCoin)
+    distanceWeight = 0.2
+    densityWeight = 1.0
+    for coin in coins:
+        currentDistance = getDistanceBetween(player, coin) * distanceWeight # distance g
+        currentDensity = getDensity(coin,50) * densityWeight # heuristic h
+        currentCost = currentDistance + currentDensity
+        #print(str(coin.x) + " " + str(coin.y) + " " + str(currentCost))
+        if(currentCost < smallestCost):
+            smallestCost = currentCost
+            bestCoin = coin
+    return bestCoin
+
 def getDistanceBetween(player, coin):
-    return (abs(player.x - coin.x) ** 2 + abs(player.y - coin.y) ** 2) ** .5
+    return ((abs(player.x - coin.x) ** 2 + abs(player.y - coin.y) ** 2) ** .5) / 10
+
+def getDensity(coin,distance):
+    nearbyCoins = len(coins)
+    for coin2 in coins:
+        if(getDistanceBetween(coin,coin2) < distance):
+            nearbyCoins-=1
+    return nearbyCoins
 
 # In[10]:
 
 
 #Blue Player
 class Player:
-    step = 11
-    direction = 0
-    score=0
     
-    def __init__(self):
+    step = 10
+
+    def __init__(self,x,y):
        # initial positions, no collision.
-        self.x = 2*44
-        self.y = 2*44
+        self.x = x*40
+        self.y = y*40
+        self.score = 0
+        self.direction = 0
         self.targetCoin = getClosestCoin(self)
 
     def update(self):
@@ -160,131 +167,33 @@ class Player:
             if self.y > dy:
                 self.moveUp()
 
-    def setTarget(self,target):
-        self.targetCoin = target
+    def setTarget(self):
+        self.targetCoin = getClosestCoin(self)
 
     def draw(self, surface, image):
         surface.blit(image,(self.x,self.y))
 
-
-# In[11]:
-
-
-#Red Player
-class Computer:
-    x = [0]
-    y = [0]
-    step = 44
-    direction = 0
-    length = 0
-    score=0
- 
-    updateCountMax = 2
-    updateCount = 0
-
-    def __init__(self, length):
-       self.length = length
-       for i in range(0,2000):
-           self.x.append(-100)
-           self.y.append(-100)
-
-       # initial positions, no collision.
-       self.x[0] = 1*44
-       self.y[0] = 4*44
-
-    def update(self):
-        self.updateCount = self.updateCount + 1
-        if self.updateCount > self.updateCountMax:
-
-            # update previous positions
-            for i in range(self.length-1,0,-1):
-                self.x[i] = self.x[i-1]
-                self.y[i] = self.y[i-1]
-
-            # update position of head of snake
-            if self.direction == 0:
-                self.x[0] = self.x[0] + self.step
-            if self.direction == 1:
-                self.x[0] = self.x[0] - self.step
-            if self.direction == 2:
-                self.y[0] = self.y[0] - self.step
-            if self.direction == 3:
-                self.y[0] = self.y[0] + self.step
-
-            self.updateCount = 0
-
+class SmartPlayer(Player):
+    def __init__(self,x,y):
+        super().__init__(x,y)
+    def setTarget(self):
+        self.targetCoin = getBestCoin(self)
     def show_score(self, surface,choice, width, height):
         score=self.score
         score_font = pygame.font.SysFont('consalas', 20)
         score_surface = score_font.render('Red Score : ' + str(score), True, white)
         score_rect = score_surface.get_rect()
+        choice = 0
         if choice == 1:
-            score_rect.midtop = (width/10, 15)
+            score_rect.midtop = (width - width/10, 15)
         else:
-            score_rect.midtop = (width/2, height/1.25)
+            score_rect.midtop = (width/10, 15)
         surface.blit(score_surface, score_rect)
-    # pygame.display.flip(
-    
-    def moveRight(self):
-        self.direction = 0
-
-    def moveLeft(self):
-        self.direction = 1
-
-    def moveUp(self):
-        self.direction = 2
-
-    def moveDown(self):
-        self.direction = 3 
-    
-    def target(self,dx,dy):
-        if self.x[0]> dx:
-            self.moveLeft()
-
-        if self.x[0]< dx:
-            self.moveRight()
-
-        if self.x[0] == dx:
-            if self.y[0] < dy:
-                self.moveDown()
-
-            if self.y[0] > dy:
-                self.moveUp()
-
-    def draw(self, surface, image):
-        for i in range(0,self.length):
-            surface.blit(image,(self.x[i],self.y[i])) 
-
-
-# In[12]:
-
-
-class Game:
-    def isCollision(self,x1,y1,x2,y2,bsize):
-        if x1 >= x2 and x1 <= x2 + bsize:
-            if y1 >= y2 and y1 <= y2 + bsize:
-                return True
-        return False
-
-
-# In[ ]:
-
-
-
-
 
 # In[13]:
 
 
 class App:
-
-    windowWidth = 800
-    windowHeight = 600
-    player = 0
-    #apple = 0
-    index=0
-    
-
 
     def __init__(self):
         self._running = True
@@ -292,16 +201,13 @@ class App:
         self._blue_surf = None
         self._red_surf = None
         self._apple_surf = None
-        self.game = Game()
-        self.player = Player()
-        #for i in range 10:
-        self.apple = Apple(8,5)
-        self.computer = Computer(1)
+        self.player = Player(8,2)
+        self.computer = SmartPlayer(9,2)
 
     
     def on_init(self):
         pygame.init()
-        self._display_surf = pygame.display.set_mode((self.windowWidth,self.windowHeight), pygame.HWSURFACE)
+        self._display_surf = pygame.display.set_mode((windowWidth,windowHeight), pygame.HWSURFACE)
         pygame.display.set_caption('Pygame pythonspot.com example')
         self._running = True
         self._blue_surf = pygame.image.load("images/blue_player.png").convert()
@@ -314,25 +220,34 @@ class App:
             
     def on_loop(self):
 
-        self.computer.target(self.apple.x, self.apple.y)
+        self.computer.target()
         self.player.target()
         self.player.update()
         self.computer.update()
             
         # does blue eat apple?
         if self.player.x == self.player.targetCoin.x and self.player.y == self.player.targetCoin.y:
-            print("Coin collected!")
-            coins.remove(self.player.targetCoin)
-            self.player.setTarget(getClosestCoin(self.player))
             self.player.score = self.player.score + self.player.targetCoin.value
+            if self.player.x == self.computer.x and self.player.y == self.computer.y:
+                self.computer.score = self.computer.score + self.computer.targetCoin.value
+            if(len(coins) > 1):
+                print("Coin collected!")
+                coins.remove(self.player.targetCoin)
+                self.player.setTarget()
+                self.computer.setTarget()
+            else:
+                self._running = False
 
         # does red eat apple?
-        for i in range(0,1):#self.player.length):
-            if self.game.isCollision(self.apple.x,self.apple.y,self.computer.x[i], self.computer.y[i],44):
-                self.apple.x = randint(2,9) * 44
-                self.apple.y = randint(2,9) * 44
-                self.apple.value= randint(4,9)
-                self.computer.score=self.computer.score + self.apple.value
+        if self.computer.x == self.computer.targetCoin.x and self.computer.y == self.computer.targetCoin.y:
+            self.computer.score = self.computer.score + self.computer.targetCoin.value
+            if(len(coins) > 1):
+                print("Coin collected!")
+                coins.remove(self.computer.targetCoin)
+                self.player.setTarget()
+                self.computer.setTarget()
+            else:
+                self._running = False
        
         pass  
     
@@ -341,11 +256,9 @@ class App:
         for coin in coins:
             coin.draw(self._display_surf)
         self.player.draw(self._display_surf, self._blue_surf)
-        self.apple.draw(self._display_surf, self._apple_surf)
         self.computer.draw(self._display_surf, self._red_surf)
-        self.computer.show_score(self._display_surf,1, self.windowWidth, self.windowHeight)
-        self.player.show_score(self._display_surf,2, self.windowWidth, self.windowHeight)
-        #all_sprites_list.draw(self._display_surf)
+        self.computer.show_score(self._display_surf,1, windowWidth, windowHeight)
+        self.player.show_score(self._display_surf,2, windowWidth, windowHeight)
         pygame.display.flip()
    
     def on_cleanup(self):
@@ -365,8 +278,12 @@ class App:
             self.on_render()
             time.sleep (50.0 / 1000.0)
                 #else:
-        print("You lose! Collision: ")
-        print("x[0] (" + str(self.player.x) + "," + str(self.player.y) + ")" ) 
+        if self.player.score > self.computer.score:
+            print("Blue player wins! " + str(self.player.score) + " : " + str(self.computer.score))
+        elif self.player.score < self.computer.score:
+            print("Red player wins! " + str(self.computer.score) + " : " + str(self.player.score))
+        else:
+            print("Tie! " + str(self.player.score) + " : " + str(self.computer.score))
         exit(0)
         self.on_cleanup()
 
