@@ -44,12 +44,9 @@ class Apple():
 # In[6]:
 
 
-class Coin(pygame.sprite.Sprite):
+class Coin():
     score=0
     def __init__(self,x,y,val):
- 
-        # Call the parent class (Sprite) constructor
-        super().__init__()
         self.image = coin_img
         self.value= val
         self.x = x
@@ -369,7 +366,7 @@ class App:
             time.sleep (50.0 / 1000.0)
                 #else:
         print("You lose! Collision: ")
-        print("x[0] (" + str(self.player.x[0]) + "," + str(self.player.y[0]) + ")" ) 
+        print("x[0] (" + str(self.player.x) + "," + str(self.player.y) + ")" ) 
         exit(0)
         self.on_cleanup()
 
