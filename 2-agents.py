@@ -74,16 +74,15 @@ def getClosestCoin(player):
             closestCoin = coin
     return closestCoin
 
-def getBestCoin(player):
+def getBestCoin(player): # combines distance based-approach of blue ghost with a heuristic based on a coin's proximity to other coins
     bestCoin = coins[0]
     smallestCost = getDistanceBetween(player, bestCoin)
-    distanceWeight = 0.2
+    distanceWeight = 0.2 # used to weight each attribute (distance and density)
     densityWeight = 1.0
-    for coin in coins:
-        currentDistance = getDistanceBetween(player, coin) * distanceWeight # distance g
-        currentDensity = getDensity(coin,50) * densityWeight # heuristic h
-        currentCost = currentDistance + currentDensity
-        #print(str(coin.x) + " " + str(coin.y) + " " + str(currentCost))
+    for coin in coins: # finds the 'best' (aka lowest cost) coin
+        currentDistance = getDistanceBetween(player, coin) * distanceWeight # distance (g)
+        currentDensity = getDensity(coin,50) * densityWeight # heuristic (h)
+        currentCost = currentDistance + currentDensity # cost (f)
         if(currentCost < smallestCost):
             smallestCost = currentCost
             bestCoin = coin
@@ -93,11 +92,11 @@ def getDistanceBetween(player, coin):
     return ((abs(player.x - coin.x) ** 2 + abs(player.y - coin.y) ** 2) ** .5) / 10
 
 def getDensity(coin,distance):
-    nearbyCoins = len(coins)
-    for coin2 in coins:
+    nearbyCoins = len(coins) # since we want to return a lower value for coins with lots of coins nearby, nearbyCoins starts at the total # of coins 
+    for coin2 in coins: # for each coin, checks if that coin is within the given distance
         if(getDistanceBetween(coin,coin2) < distance):
-            nearbyCoins-=1
-    return nearbyCoins
+            nearbyCoins-=1 # subtracts one for each coin that is nearby
+    return nearbyCoins # this results in the function returning a high value for isolated coins, and a low value for coins in dense areas
 
 # In[10]:
 
