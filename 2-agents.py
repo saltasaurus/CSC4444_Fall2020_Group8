@@ -127,8 +127,9 @@ class Player:
         score_font = pygame.font.SysFont('consalas', 20)
         score_surface = score_font.render('Blue Score : ' + str(score), True, white)
         score_rect = score_surface.get_rect()
+        choice = 1
         if choice == 1:
-            score_rect.midtop = (width/10, 15)
+            score_rect.midtop = (width - width/10, 15)
         else:
             score_rect.midtop = (width/2, height/1.25)
         surface.blit(score_surface, score_rect)
@@ -340,13 +341,13 @@ class App:
     
     def on_render(self):
         self._display_surf.fill((0,0,0))
+        for coin in coins:
+            coin.draw(self._display_surf)
         self.player.draw(self._display_surf, self._blue_surf)
         self.apple.draw(self._display_surf, self._apple_surf)
         self.computer.draw(self._display_surf, self._red_surf)
         self.computer.show_score(self._display_surf,1, self.windowWidth, self.windowHeight)
         self.player.show_score(self._display_surf,2, self.windowWidth, self.windowHeight)
-        for coin in coins:
-            coin.draw(self._display_surf)
         #all_sprites_list.draw(self._display_surf)
         pygame.display.flip()
    
@@ -357,7 +358,7 @@ class App:
         if self.on_init() == False:
             self._running = False
  
-        while self._running and self.computer.score < 100 and self.player.score <100:
+        while self._running and self.computer.score < 1000 and self.player.score < 1000:
             # ends loop if user quits
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
