@@ -47,7 +47,7 @@ windowHeight = 800
  
 # This is a list of every sprite. 
 # All coins and the players as well.
-for i in range(50):
+for i in range(60):
     # This represents a coin
     coin = Coin(randrange(0,windowWidth,40),randrange(0,windowHeight,40))    
     
@@ -224,29 +224,28 @@ class App:
         self.player.update()
         self.computer.update()
             
-        # does blue eat apple?
-        if self.player.x == self.player.targetCoin.x and self.player.y == self.player.targetCoin.y:
-            self.player.score = self.player.score + self.player.targetCoin.value
-            if self.player.x == self.computer.x and self.player.y == self.computer.y:
-                self.computer.score = self.computer.score + self.computer.targetCoin.value
-            if(len(coins) > 1):
-                print("Coin collected!")
-                coins.remove(self.player.targetCoin)
-                self.player.setTarget()
-                self.computer.setTarget()
-            else:
-                self._running = False
 
-        # does red eat apple?
-        if self.computer.x == self.computer.targetCoin.x and self.computer.y == self.computer.targetCoin.y:
-            self.computer.score = self.computer.score + self.computer.targetCoin.value
-            if(len(coins) > 1):
-                print("Coin collected!")
-                coins.remove(self.computer.targetCoin)
-                self.player.setTarget()
-                self.computer.setTarget()
-            else:
-                self._running = False
+        for coin in coins:
+            if self.player.x == coin.x and self.player.y == coin.y:
+                self.player.score = self.player.score + coin.value
+                if self.computer.x == coin.x and self.computer.y == coin.y:
+                    self.computer.score = self.computer.score + coin.value
+                if(len(coins) > 1):
+                    print("Coin collected!")
+                    coins.remove(coin)
+                    self.player.setTarget()
+                    self.computer.setTarget()
+                else:
+                    self._running = False
+            if self.computer.x == coin.x and self.computer.y == coin.y:
+                self.computer.score = self.computer.score + coin.value
+                if(len(coins) > 1):
+                    print("Coin collected!")
+                    coins.remove(coin)
+                    self.player.setTarget()
+                    self.computer.setTarget()
+                else:
+                    self._running = False
        
         pass  
     
