@@ -207,7 +207,7 @@ class App:
     def on_init(self):
         pygame.init()
         self._display_surf = pygame.display.set_mode((windowWidth,windowHeight), pygame.HWSURFACE)
-        pygame.display.set_caption('Pygame pythonspot.com example')
+        pygame.display.set_caption('CSC 4444 Red vs. Blue')
         self._running = True
         self._blue_surf = pygame.image.load("images/blue_player.png").convert()
         self._red_surf = pygame.image.load("images/red_player.png").convert()
