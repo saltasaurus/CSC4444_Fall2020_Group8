@@ -3,7 +3,7 @@
 
 # In[3]:
 
-
+import abc
 from pygame.locals import *
 from random import randint, randrange
 import pygame
@@ -16,21 +16,27 @@ import os
 
 
 
-white = 255,255,255
 BLACK = (  0,   0,   0)
 WHITE = (255, 255, 255)
 RED   = (255,   0,   0)
 
-red_player = pygame.image.load("images/red_player.png")
-coin_img = pygame.image.load("images/coin.png")
-blue_player=pygame.image.load("images/blue_player.png")
+# Window Settings
+windowWidth = 1200
+windowHeight = 800
+
+# Load Images
+coin_img         = pygame.image.load("images/coin.png")
+red_player_img   = pygame.image.load("images/red_player.png")
+blue_player_img  = pygame.image.load("images/blue_player.png")
+green_player_img = pygame.image.load("images/green_player2.png")
 
 
+# Coin Object
 class Coin():
-    score=0
-    def __init__(self,x,y):
+    
+    def __init__(self, x, y):
         self.image = coin_img
-        self.value= 1
+        self.value = randint(1,5)   # coins will have different values assigned at random
         self.x = x
         self.y = y
 
@@ -42,8 +48,6 @@ class Coin():
 # In[7]:
 
 coins = []
-windowWidth = 1200
-windowHeight = 800
  
 # This is a list of every sprite. 
 # All coins and the players as well.
@@ -101,21 +105,23 @@ def getDensity(coin,distance):
 # In[10]:
 
 
-#Blue Player
-class Player:
+# Generic Agent Object
+class Agent:
     
+    # universal step size for any agent
     step = 10
 
-    def __init__(self,x,y):
-       # initial positions, no collision.
+    def __init__(self, color, x, y):
+        # initial positions, no collision.
+        self.color = color
         self.x = x*40
         self.y = y*40
         self.score = 0
         self.direction = 0
-        self.targetCoin = getClosestCoin(self)
+        self.targetCoin = None
 
     def update(self):
-        # update position of head of snake
+        # update position of origin point
         if self.direction == 0:
             self.x = self.x + self.step
         elif self.direction == 1:
@@ -125,10 +131,10 @@ class Player:
         elif self.direction == 3:
             self.y = self.y + self.step
     
-    def show_score(self, surface,choice, width, height):
-        score=self.score
+    def show_score(self, surface, choice, width, height):
+        score = self.score
         score_font = pygame.font.SysFont('consalas', 20)
-        score_surface = score_font.render('Blue Score : ' + str(score), True, white)
+        score_surface = score_font.render(self.color + ' Score : ' + str(score), True, WHITE)
         score_rect = score_surface.get_rect()
         choice = 1
         if choice == 1:
@@ -149,7 +155,7 @@ class Player:
     def moveDown(self):
         self.direction = 3 
 
-    #coin dx and dy
+    # coin dx and dy
     def target(self):
         dx = self.targetCoin.x
         dy = self.targetCoin.y
@@ -166,28 +172,43 @@ class Player:
             if self.y > dy:
                 self.moveUp()
 
+    @abc.abstractmethod
     def setTarget(self):
-        self.targetCoin = getClosestCoin(self)
+        """Set next coin for targeting by agent."""
+        return
 
     def draw(self, surface, image):
         surface.blit(image,(self.x,self.y))
 
-class SmartPlayer(Player):
-    def __init__(self,x,y):
-        super().__init__(x,y)
+# Agent 1 -> Closest Coin
+class ClosestCoinAgent(Agent):
+
+    def __init__(self, color, x, y):
+        super().__init__(color, x, y)
+        self.targetCoin = getClosestCoin(self)
+    
+    def setTarget(self):
+        self.targetCoin = getClosestCoin(self)
+
+# Agent 2 -> Greedy
+class GreedyAgent(Agent):
+
+    def __init__(self, color, x, y):
+        super().__init__(color, x, y)
+        self.targetCoin = getMostValuableCoin()
+
+    def setTarget(self):
+        self.targetCoin = getMostValuableCoin()
+
+# Agent 3 -> Density-based Agent
+class DensityAgent(Agent):
+
+    def __init__(self, color, x, y):
+        super().__init__(color, x, y)
+        self.targetCoin = getBestCoin(self)
+
     def setTarget(self):
         self.targetCoin = getBestCoin(self)
-    def show_score(self, surface,choice, width, height):
-        score=self.score
-        score_font = pygame.font.SysFont('consalas', 20)
-        score_surface = score_font.render('Red Score : ' + str(score), True, white)
-        score_rect = score_surface.get_rect()
-        choice = 0
-        if choice == 1:
-            score_rect.midtop = (width - width/10, 15)
-        else:
-            score_rect.midtop = (width/10, 15)
-        surface.blit(score_surface, score_rect)
 
 # In[13]:
 
@@ -200,8 +221,9 @@ class App:
         self._blue_surf = None
         self._red_surf = None
         self._apple_surf = None
-        self.player = Player(8,2)
-        self.computer = SmartPlayer(9,2)
+        self.agent1 = ClosestCoinAgent("Blue", 8,2)
+        self.agent2 = DensityAgent("Red", 9,2)
+        self.agent3 = GreedyAgent("Green", 10,2)
 
     
     def on_init(self):
@@ -212,6 +234,7 @@ class App:
         self._blue_surf = pygame.image.load("images/blue_player.png").convert()
         self._red_surf = pygame.image.load("images/red_player.png").convert()
         self._apple_surf = pygame.image.load("images/coin.png").convert()
+        self._green_surf = green_player_img.convert()
 
     def on_event(self, event):
         if event.type == QUIT:
@@ -219,44 +242,51 @@ class App:
             
     def on_loop(self):
 
-        self.computer.target()
-        self.player.target()
-        self.player.update()
-        self.computer.update()
+        self.agent1.target()
+        self.agent2.target()
+        self.agent3.target()
+        self.agent1.update()
+        self.agent2.update()
+        self.agent3.update()
             
 
         for coin in coins:
-            if self.player.x == coin.x and self.player.y == coin.y:
-                self.player.score = self.player.score + coin.value
-                if self.computer.x == coin.x and self.computer.y == coin.y:
-                    self.computer.score = self.computer.score + coin.value
+            if self.agent1.x == coin.x and self.agent1.y == coin.y:
+                self.agent1.score = self.agent1.score + coin.value
                 if(len(coins) > 1):
                     print("Coin collected!")
                     coins.remove(coin)
-                    self.player.setTarget()
-                    self.computer.setTarget()
+                    self.agent1.setTarget()
                 else:
                     self._running = False
-            if self.computer.x == coin.x and self.computer.y == coin.y:
-                self.computer.score = self.computer.score + coin.value
+            if self.agent2.x == coin.x and self.agent2.y == coin.y:
+                self.agent2.score = self.agent2.score + coin.value
                 if(len(coins) > 1):
                     print("Coin collected!")
                     coins.remove(coin)
-                    self.player.setTarget()
-                    self.computer.setTarget()
+                    self.agent2.setTarget()
                 else:
                     self._running = False
-       
-        pass  
+            if self.agent3.x == coin.x and self.agent3.y == coin.y:
+                self.agent3.score = self.agent3.score + coin.value
+                if(len(coins) > 1):
+                    print("Coin collected!")
+                    coins.remove(coin)
+                    self.agent3.setTarget()
+                else:
+                    self._running = False
+
     
     def on_render(self):
         self._display_surf.fill((0,0,0))
         for coin in coins:
             coin.draw(self._display_surf)
-        self.player.draw(self._display_surf, self._blue_surf)
-        self.computer.draw(self._display_surf, self._red_surf)
-        self.computer.show_score(self._display_surf,1, windowWidth, windowHeight)
-        self.player.show_score(self._display_surf,2, windowWidth, windowHeight)
+        self.agent1.draw(self._display_surf, self._blue_surf)
+        self.agent2.draw(self._display_surf, self._red_surf)
+        self.agent3.draw(self._display_surf, self._green_surf)
+        #self.agent1.show_score(self._display_surf,10, windowWidth, windowHeight)
+        #self.agent2.show_score(self._display_surf,20, windowWidth, windowHeight)
+        self.agent3.show_score(self._display_surf,30, windowWidth, windowHeight)
         pygame.display.flip()
    
     def on_cleanup(self):
@@ -266,7 +296,7 @@ class App:
         if self.on_init() == False:
             self._running = False
  
-        while self._running and self.computer.score < 1000 and self.player.score < 1000:
+        while self._running and self.agent1.score < 1000 and self.agent2.score < 1000 and self.agent3.score < 1000:
             # ends loop if user quits
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
