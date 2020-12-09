@@ -113,7 +113,7 @@ class Game:
         self._display_surf = pygame.display.set_mode((self.windowWidth,self.windowHeight), pygame.HWSURFACE)
         self._coin_surface = coin_img.convert()
         for _, agent in self.agents.items():
-            agent._surface = agent.img.convert()
+            agent._surface = agent.r_img.convert_alpha()
 
     def on_event(self, event):
         if event.type == QUIT:

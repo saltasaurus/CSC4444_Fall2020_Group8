@@ -3,9 +3,14 @@ import pygame
 
 
 # Load Static Images
-red_player_img   = pygame.image.load("images/red_player.png")
-blue_player_img  = pygame.image.load("images/blue_player.png")
-green_player_img = pygame.image.load("images/green_player.png")
+RED_AGENT_R_IMG     = pygame.image.load("images/red_player.png")
+RED_AGENT_L_IMG     = pygame.transform.flip(RED_AGENT_R_IMG, True, False)
+
+BLUE_AGENT_R_IMG     = pygame.image.load("images/blue_player.png")
+BLUE_AGENT_L_IMG     = pygame.transform.flip(BLUE_AGENT_R_IMG, True, False)
+
+GREEN_AGENT_R_IMG     = pygame.image.load("images/green_player.png")
+GREEN_AGENT_L_IMG     = pygame.transform.flip(GREEN_AGENT_R_IMG, True, False)
 
 
 """
@@ -27,7 +32,8 @@ class Agent:
     def __init__(self, color, initial_x, initial_y):
         # initial positions, no collision.
         self.color = color
-        self.img = None
+        self.l_img = None
+        self.r_img = None
         self.surface = None
         self.x = initial_x*40
         self.y = initial_y*40
@@ -62,9 +68,11 @@ class Agent:
 
     def moveRight(self):
         self.direction = 0
+        self._surface = self.r_img.convert_alpha()
 
     def moveLeft(self):
         self.direction = 1
+        self._surface = self.l_img.convert_alpha()
 
     def moveUp(self):
         self.direction = 2
@@ -106,7 +114,8 @@ class ClosestCoinAgent(Agent):
 
     def __init__(self, x, y, initial_coins):
         super().__init__("Blue", x, y)
-        self.img = blue_player_img
+        self.r_img = BLUE_AGENT_R_IMG
+        self.l_img = BLUE_AGENT_L_IMG
         self._surface = None
         self.targetCoin = self.getClosestCoin(initial_coins)
     
@@ -136,7 +145,8 @@ class DensityAgent(Agent):
 
     def __init__(self, x, y, initial_coins):
         super().__init__("Red", x, y)
-        self.img = red_player_img
+        self.r_img = RED_AGENT_R_IMG
+        self.l_img = RED_AGENT_L_IMG
         self._surface = None
         self.targetCoin = self.getBestCoin(initial_coins)
 
@@ -176,7 +186,8 @@ class GreedyAgent(Agent):
 
     def __init__(self, x, y, initial_coins):
         super().__init__("Green", x, y)
-        self.img = green_player_img
+        self.r_img = GREEN_AGENT_R_IMG
+        self.l_img = GREEN_AGENT_L_IMG
         self._surface = None
         self.targetCoin = self.getMostValuableCoin(initial_coins)
 
