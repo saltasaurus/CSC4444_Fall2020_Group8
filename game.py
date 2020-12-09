@@ -83,7 +83,6 @@ class Game:
         for _, agent in self.agents.items():
             agent._surface = agent.img.convert()
 
-
     def on_event(self, event):
         if event.type == QUIT:
             self._running = False
@@ -106,10 +105,11 @@ class Game:
                     print(key + " collected a coin with a value of " + str(coin.value) + "!")
                     if coin in self.coins:
                         self.coins.remove(coin)
+                        # if this was the last coin, then game over
+                        if len(self.coins) == 0:
+                            self._running = False
+                            continue
                     agent.setTarget(self.coins)
-        # check if last coin was collected
-        if not len(self.coins) > 1:
-            self._running = False
     
     def on_render(self):
         # render bg
