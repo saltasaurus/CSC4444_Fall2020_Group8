@@ -4,6 +4,7 @@ from pygame.locals import *
 import pygame
 import random
 import time
+import numpy as np
 
 from agents import ClosestCoinAgent, DensityAgent, GreedyAgent
 
@@ -38,25 +39,62 @@ class Coin():
 """
 class Game:
 
-    def __init__(self, numCoins, windowWidth=1200, windowHeight=800):
+    def __init__(self, numCoins, coinValueFunction, agents, windowWidth, windowHeight):
         # internal
         self._running       = None
 
         # settings
-        self.numCoins     = numCoins
-        self.windowWidth  = windowWidth
-        self.windowHeight = windowHeight
+        self.numCoins           = numCoins
+        self.coinValueFunction  = coinValueFunction
+        self.agents             = agents
+        self.windowWidth        = windowWidth
+        self.windowHeight       = windowHeight
 
         # sprites
         self.coins = []
-        self.agents = {
-            "Blue":     None,
-            "Red":      None,
-            "Green":    None
-        }
+        self.agents = agents
 
         # display
         self._display_surf  = None
+    
+    def initialize_coins(self):
+        # compute geometric
+        p = 0.25 # pval -> must change internally
+        g = np.random.geometric(p, size=self.numCoins) - 1
+        # initialize coins
+        for i in range(self.numCoins):
+            x = random.randrange(0,self.windowWidth,40)
+            y = random.randrange(0,self.windowHeight,40)
+            # randomly selected values
+            if self.coinValueFunction == "random":
+                value = random.randint(1, 7)
+            # geometric distribution of values
+            elif self.coinValueFunction == "geometric":
+                value = g[i]
+            # safety catch incorrect argument
+            else:
+                raise Exception("Unrecognized coin value function.")
+            self.coins.append(Coin(x, y, value))
+    
+    def parse_agents(self):
+        agentsTemp = self.agents
+        self.agents = {}
+        # iterate through agents
+        for agent in agentsTemp:
+            # pick a random spawn location
+            x = random.randrange(0,self.windowWidth,40)
+            y = random.randrange(0,self.windowHeight,40)
+            # initialize agent
+            if agent == "closestcoin":
+                self.agents[agent] = ClosestCoinAgent(8, 2, self.coins)
+                continue
+            if agent == "density":
+                self.agents[agent] = DensityAgent(9, 2, self.coins)
+                continue
+            if agent == "greedy":
+                self.agents[agent] = GreedyAgent(10, 2, self.coins)
+                continue 
+
 
     def on_init(self):
         # initialize pygame
@@ -65,16 +103,10 @@ class Game:
         self._running = True
 
         # initialize coins
-        for _ in range(self.numCoins):
-            x = random.randrange(0,self.windowWidth,40)
-            y = random.randrange(0,self.windowHeight,40)
-            value = random.randint(1, 7)
-            self.coins.append(Coin(x, y, value))
+        self.initialize_coins()
 
         # initialize agents
-        self.agents["Blue"]  = ClosestCoinAgent(8, 2, self.coins)
-        self.agents["Red"]   = DensityAgent(9, 2, self.coins)
-        self.agents["Green"] = GreedyAgent(10, 2, self.coins)
+        self.parse_agents()
 
         # initialize window / surfaces
         pygame.display.set_caption("CSC 4444 - AI Pathfinding Algorithms")
@@ -148,16 +180,22 @@ class Game:
             time.sleep (50.0 / 1000.0)
             #    #else:
 
-        # find winner
-        winner = self.agents["Blue"]
-        if self.agents["Red"].score > winner.score:
-            winner = self.agents["Red"]
-            if self.agents["Green"].score > winner.score:
-                winner = self.agents["Green"]
-        elif self.agents["Green"].score > winner.score:
-            winner = self.agents["Green"]
-        # log winner
-        print(winner.color + " wins with a score of " + str(winner.score) + "!")
+        # separate game logs from final to make it pretty
+        print("############################################")
+
+        # show final scores and find winner
+        print("Final Scores: ")
+        winner_key = None
+        winner = None
+        winner_score = -1
+        for key, agent in self.agents.items():
+            print(key + "("+agent.color+") | Score: " + str(agent.score))
+            if agent.score > winner_score:
+                winner_key = key
+                winner = agent
+                winner_score = agent.score
+        # log winner and rest of the scores
+        print(winner_key + "("+winner.color+") wins with a score of " + str(winner.score) + "!")
 
         # cleanup
         self.on_cleanup()
