@@ -20,8 +20,8 @@ if __name__ == "__main__" :
 
     # add arguments
     parser.add_argument("-n", metavar="", type=int, help="the number of coins to generate in the game", default=50)
-    parser.add_argument("-f", metavar="", type=str, help="the function by which to determine coin values", default="random")
-    parser.add_argument("-a", metavar="", type=str, help="ai agent to play the game", action="append")
+    parser.add_argument("-f", metavar="", type=str, help="the function by which to determine coin values, see README for list of acceptable functions", default="random")
+    parser.add_argument("-a", metavar="", type=str, help="ai agent to play the game, see README for list of acceptable agents", action="append")
     parser.add_argument("-ww", metavar="", type=int, help="width of the window", default=1200)
     parser.add_argument("-wh", metavar="", type=int, help="height of the window", default=800)
 
