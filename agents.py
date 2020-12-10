@@ -1,5 +1,6 @@
 import abc
 import pygame
+import math
 
 
 # Load Static Images
@@ -159,8 +160,8 @@ class DensityAgent(Agent):
     def getBestCoin(self, coins): # combines distance based-approach of blue ghost with a heuristic based on a coin's proximity to other coins
         bestCoin = coins[0]
         smallestCost = getDistanceBetween(self, bestCoin)
-        distanceWeight = 0.2 # used to weight each attribute (distance and density)
-        densityWeight = 1.0
+        distanceWeight = 1.0 # used to weight each attribute (distance and density)
+        densityWeight = .35
         for coin in coins: # finds the 'best' (aka lowest cost) coin
             currentDistance = getDistanceBetween(self, coin) * distanceWeight # distance (g)
             currentDensity = self.getDensity(coin, coins, 50) * densityWeight # heuristic (h)
@@ -171,11 +172,10 @@ class DensityAgent(Agent):
         return bestCoin
 
     def getDensity(self, coin, coins, distance):
-        nearbyCoins = len(coins) # since we want to return a lower value for coins with lots of coins nearby, nearbyCoins starts at the total # of coins 
+        density = 0
         for coin2 in coins: # for each coin, checks if that coin is within the given distance
-            if(getDistanceBetween(coin, coin2) < distance):
-                nearbyCoins-=1 # subtracts one for each coin that is nearby
-        return nearbyCoins # this results in the function returning a high value for isolated coins, and a low value for coins in dense areas
+            density += math.sqrt(getDistanceBetween(coin, coin2))
+        return (density/len(coins)) ** 2 # this results in the function returning a high value for isolated coins, and a low value for coins in dense areas
 
 
 """
@@ -198,9 +198,9 @@ class GreedyAgent(Agent):
         Brain
     """
     def getMostValuableCoin(self, coins):
-        mvc = coins[0]
+        mvc = None
         for coin in coins:
-            if coin.value > mvc.value:
+            if mvc == None or coin.value > mvc.value:
                 mvc = coin
             elif coin.value == mvc.value:
                 # compare distance and target the closer one
